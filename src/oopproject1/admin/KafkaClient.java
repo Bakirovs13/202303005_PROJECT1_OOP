@@ -2,16 +2,14 @@ package oopproject1.admin;
 
 abstract class KafkaClient {
 
-	private KafkaTopic topic;
+    private KafkaTopic topic;
 
     public KafkaClient(KafkaTopic topic) {
         if (topic == null) {
-            throw new IllegalArgumentException("Topic не может быть null");
+            throw new IllegalArgumentException("Topic δεν μπορεί να είναι null");
         }
         this.topic = topic;
     }
-
-
 
     public KafkaTopic getTopic() {
         return topic;
@@ -21,18 +19,9 @@ abstract class KafkaClient {
         this.topic = topic;
     }
 
-    
-    
+    public void sendMessage(String message) {
+        System.out.println("Sending message : " + message);
+    }
 
-public  void sendMessage(String message){
-      System.out.println("Sending message : " + message);
+    public abstract String receiveMessage();
 }
-
-
-
-
-public  abstract String receiveMessage();
-
-}
-
-

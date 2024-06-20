@@ -1,28 +1,31 @@
 package oopproject1.admin;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class KafkaCluster {
 
-    private KafkaBroker[] brokers;
+    private List<KafkaBroker> brokers;
     private int default_max_brokers;
-    private int brokerCount;
+  //  private int brokerCount;
     private int maxBrokers;
 
 
     public KafkaCluster(int maxBrokers, int maxTopicsPerBroker) {
         this.maxBrokers = maxBrokers;
         this.default_max_brokers = maxTopicsPerBroker;
-        this.brokers = new KafkaBroker[maxBrokers];
-        this.brokerCount = 0;
+        this.brokers = new ArrayList<>(maxBrokers);
+      //  this.brokerCount = 0;
     }
 
     //getters and setters
 
-    public KafkaBroker[] getBrokers() {
+    public List<KafkaBroker> getBrokers() {
         return brokers;
     }
 
-    public void setBrokers(KafkaBroker[] brokers) {
+    public void setBrokers(List<KafkaBroker> brokers) {
         this.brokers = brokers;
     }
 
@@ -32,14 +35,6 @@ public class KafkaCluster {
 
     public void setDefault_max_brokers(int default_max_brokers) {
         this.default_max_brokers = default_max_brokers;
-    }
-
-    public int getBrokerCount() {
-        return brokerCount;
-    }
-
-    public void setBrokerCount(int brokerCount) {
-        this.brokerCount = brokerCount;
     }
 
     public int getMaxBrokers() {
@@ -53,7 +48,7 @@ public class KafkaCluster {
     //implementation of methods
 
     public void insertBroker(KafkaBroker broker) {
-        if (brokerCount >= maxBrokers) {
+        if (brokers.size() >= maxBrokers) {
             System.out.println("No space available to add a new broker");
             return;
         }
@@ -61,15 +56,15 @@ public class KafkaCluster {
             System.out.println("A broker with the same host and port already exists.");
             return;
         }
-        brokers[brokerCount++] = broker;
+        brokers.add(broker);
         System.out.println("The broker with host " + broker.getHost() + " and port " + broker.getPort() + " was added.");
     }
 
     public void removeBroker(String host, int port) {
-        for (int i = 0; i < brokerCount; i++) {
-            if (brokers[i].getHost().equals(host) && brokers[i].getPort() == port) {
-                System.arraycopy(brokers, i + 1, brokers, i, brokerCount - i - 1);
-                brokers[--brokerCount] = null;
+        for (int i = 0; i < brokers.size(); i++) {
+            KafkaBroker broker = brokers.get(i);
+            if (broker.getHost().equals(host) && broker.getPort() == port) {
+                brokers.remove(i);
                 return;
             }
         }
@@ -77,12 +72,12 @@ public class KafkaCluster {
     }
 
    public KafkaBroker findBrokerByHostAndPort(String host, int port) {
-        for (int i = 0; i < brokerCount; i++) {
-            if (brokers[i] != null && brokers[i].getPort() == port && brokers[i].getHost().equals(host)) {
-                return brokers[i];
-            }
-        }
-        return null;
+       for (KafkaBroker broker : brokers) {
+           if (broker != null && broker.getPort() == port && broker.getHost().equals(host)) {
+               return broker;
+           }
+       }
+       return null;
     }
 
     public void updateBrokerPort(String host, int port, int newPort) {
@@ -126,11 +121,11 @@ public class KafkaCluster {
         KafkaTopic deleteTopic = findTopicByName(topicName);
         if (deleteTopic != null) {
             for (KafkaBroker broker : brokers) {
-                if (broker != null) { // Check if broker is not null
+                if (broker != null) {
                     broker.removeTopic(topicName);
                     System.out.println("Topic " + topicName + " was deleted from broker " + broker.getHost() + ":" + broker.getPort());
                 } else {
-                    System.err.println("Null broker found in the list."); // For debugging
+                    System.err.println("Null broker found in the list.");
                 }
             }
         } else {
@@ -140,12 +135,9 @@ public class KafkaCluster {
 
     public KafkaTopic findTopicByName(String topicName) {
         for (KafkaBroker broker : brokers) {
-            KafkaTopic[] brokerTopics = broker.getTopics();
-            if (brokerTopics != null) {
-                for (KafkaTopic topic : brokerTopics) {
-                    if (topic != null && topic.getName().equals(topicName)) {
-                        return topic;
-                    }
+            for (KafkaTopic topic : broker.getTopics()) {
+                if (topic != null && topic.getName().equals(topicName)) {
+                    return topic;
                 }
             }
         }
@@ -153,18 +145,16 @@ public class KafkaCluster {
     }
 
     public void listAllBrokers() {
-        if (brokers == null || brokerCount ==0 ){
+        if (brokers.isEmpty()) {
             System.out.println("No brokers found in the KafkaCluster");
             return;
         }
-        System.out.println("List of all brokers :");
-        for (int i = 0; i < brokerCount; i++) {
-            KafkaBroker currentBroker = brokers[i];
-            System.out.println("Broker ID : " + currentBroker.getMyBrokerId());
-            System.out.println("Broker Host : " + currentBroker.getHost());
-            System.out.println("Broker Post : " + currentBroker.getPort());
+        System.out.println("List of all brokers:");
+        for (KafkaBroker broker : brokers) {
+            System.out.println("Broker ID : " + broker.getMyBrokerId());
+            System.out.println("Broker Host : " + broker.getHost());
+            System.out.println("Broker Port : " + broker.getPort());
             System.out.println("________________________________________");
-
         }
     }
 
@@ -188,9 +178,9 @@ public class KafkaCluster {
 
 
     public boolean checkBrokerExistence(String host, int port) {
-        for (int i = 0; i < brokerCount; i++) {
-            if (brokers[i].getHost().equals(host) && brokers[i].getPort() == port) {
-                System.out.println("The broker with host :" + host + " and port : "+port + "exists.");
+        for (KafkaBroker broker : brokers) {
+            if (broker.getHost().equals(host) && broker.getPort() == port) {
+                System.out.println("The broker with host :" + host + " and port :" + port + " exists.");
                 return true;
             }
         }
@@ -199,19 +189,15 @@ public class KafkaCluster {
 
     public boolean checkTopicExistence(String topicName) {
         for (KafkaBroker broker : brokers) {
-            if (broker != null) {
-                KafkaTopic[] brokerTopics = broker.getTopics();
-                if (brokerTopics != null) {
-                    for (KafkaTopic topic : brokerTopics) {
-                        if (topic != null && topic.getName().equals(topicName)) {
-                            System.out.println("The topic with name :"+topicName + "exists.");
-                            return true;
-                        }
-                    }
+            for (KafkaTopic topic : broker.getTopics()) {
+                if (topic != null && topic.getName().equals(topicName)) {
+                    System.out.println("The topic with name :" + topicName + " exists.");
+                    return true;
                 }
             }
         }
         return false;
     }
-}
+    }
+
 

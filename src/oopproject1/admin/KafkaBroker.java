@@ -1,17 +1,20 @@
 package oopproject1.admin;
 
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class KafkaBroker {
 
 	private String host;
 	private static int brokerId = 0;
    private int myBrokerId;
    private int port;
-   private KafkaTopic[] topics;
+   private List<KafkaTopic> topics;
    private int topicCount;
   private  int maxTopics;
 
-    
+
     public KafkaBroker(String host, int port, int maxTopics) {
         if (!isValidHost(host)) {
             throw new IllegalArgumentException("Invalid host address");
@@ -22,9 +25,8 @@ public class KafkaBroker {
         this.host = host;
         this.port = port;
         this.maxTopics = maxTopics;
-        this.topics = new KafkaTopic[maxTopics];
+        this.topics = new ArrayList<>();
         this.myBrokerId = ++brokerId;
-        this.topicCount = 0;
     }
 
 
@@ -62,11 +64,11 @@ public class KafkaBroker {
         this.port = port;
     }
 
-    public KafkaTopic[] getTopics() {
+    public List<KafkaTopic> getTopics() {
         return topics;
     }
 
-    public void setTopics(KafkaTopic[] topics) {
+    public void setTopics(List<KafkaTopic> topics) {
         this.topics = topics;
     }
 
@@ -113,8 +115,8 @@ public class KafkaBroker {
 
     
     void addTopic(KafkaTopic topic) {
-        if (topicCount < maxTopics) {
-            topics[topicCount++] = topic;
+        if (topics.size() < maxTopics) {
+            topics.add(topic);
         } else {
             throw new IllegalStateException("there is no space for topics");
         }
@@ -122,10 +124,9 @@ public class KafkaBroker {
 
     
     void removeTopic(String topicName) {
-        for (int i = 0; i < topicCount; i++) {
-            if (topics[i].getName().equals(topicName)) {
-                System.arraycopy(topics, i + 1, topics, i, topicCount - i - 1);
-                topics[--topicCount] = null;
+        for (int i = 0; i < topics.size(); i++) {
+            if (topics.get(i).getName().equals(topicName)) {
+               topics.remove(i);
                 return;
             }
         }
@@ -134,37 +135,35 @@ public class KafkaBroker {
     
     
     void listAllTopics() {
-        for (int i = 0; i < topicCount; i++) {
-            System.out.println(topics[i].getName());
+        for (KafkaTopic topic : topics) {
+            System.out.println(topic.getName());
         }
     }
 
 
-    void listAllTopics(boolean includeDetails) {
-        for (int i = 0; i < topicCount; i++) {
-            if (includeDetails) {
-                System.out.println("Topic Name: " + topics[i].getName() + ", Partitions: " + topics[i].getPartitions().length);
-                System.out.println("  Partitions:");
-                for (int j = 0; j < topics[i].getPartitions().length; j++) {
-                    KafkaPartition partition = topics[i].getPartitions()[j];
-                    if (partition != null) {
-                        System.out.println("    Partition " + (j + 1) + ":");
-                        System.out.println("      Replicas:");
-                        for (int k = 0; k < partition.getReplicas().length; k++) {
-                            KafkaReplica replica = partition.getReplicas()[k];
-                            if (replica != null) {
-                                System.out.println("        Replica " + (k + 1) + ": " + replica.getBroker().getHost() + ":" + replica.getBroker().getPort());
-                            } else {
-                                System.out.println("        Replica " + (k + 1) + ": null");
+        void listAllTopics(boolean includeDetails) {
+            for (KafkaTopic topic : topics) {
+                if (includeDetails) {
+                    System.out.println("Topic Name: " + topic.getName() + ", Partitions: " + topic.getPartitions().size());
+                    System.out.println("  Partitions:");
+                    for (KafkaPartition partition : topic.getPartitions()) {
+                        if (partition != null) {
+                            System.out.println("    Partition: " + partition.toString());
+                            System.out.println("      Replicas:");
+                            for (KafkaReplica replica : partition.getReplicas()) {
+                                if (replica != null) {
+                                    System.out.println("        Replica: " + replica.getBroker().getHost() + ":" + replica.getBroker().getPort());
+                                } else {
+                                    System.out.println("        Replica: null");
+                                }
                             }
+                        } else {
+                            System.out.println("    Partition: null");
                         }
-                    } else {
-                        System.out.println("    Partition " + (j + 1) + ": null");
                     }
+                } else {
+                    System.out.println(topic.getName());
                 }
-            } else {
-                System.out.println(topics[i].getName());
             }
         }
     }
-}
